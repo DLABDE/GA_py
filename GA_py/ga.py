@@ -10,17 +10,17 @@ ANS_Y = None  # 最佳值
 ANS_X = None  # 最佳解
 
 
-def ga(fun_cost, Ran, Box_num, Times, Pre=0.1, Cross=0.7, Mut_rat=0.05):
+def ga(fun_cost, Ran, Box_num, Times_num, Pre=0.1, Cross=0.7, Mut_rat=0.05):
     """
     遗传算法
     :param fun_cost: 损失函数
     :param Ran: 解算范围[L,H]
     :param Box_num: 初始化个体数目
-    :param Times: 迭代次数
+    :param Times_num: 迭代次数
     :param Pre: 解算精度
     :param Cross: 交叉变异概率
     :param Mut_rat: 基因突变概率
-    :return:
+    :return: [Y历史,X历史,最佳值,最佳解]
     """
     global Total
     Total = Box_num
@@ -30,18 +30,16 @@ def ga(fun_cost, Ran, Box_num, Times, Pre=0.1, Cross=0.7, Mut_rat=0.05):
         GA中的个体
         """
 
-        def __init__(self, name, gene, mut, getion):
+        def __init__(self, name, gene, mut):
             """
             初始化个体信息
             :param name: 个体索引，在list中的位置
             :param gene: 基因(b)
             :param mut: 变异概率(0-1)
-            :param getion:第几代(int)
             """
             self.name = name
             self.gene = gene
             self.mut = mut
-            self.getion = getion
             self.loss = None  # 损失
             self.ans = None  # 求解x
 
@@ -63,7 +61,7 @@ def ga(fun_cost, Ran, Box_num, Times, Pre=0.1, Cross=0.7, Mut_rat=0.05):
             max = ''
             for i in range(gene_hlong()):
                 max += '1'
-            self.ans = x / int(max, 2) * abs(Ran[1] - Ran[0]) + Ran[0]
+            self.ans = x / int(max, 2) * abs(Ran[1] - Ran[0]) + min(Ran)
             self.loss = fun_cost(self.ans)
 
         def bio_mut(self):
@@ -92,29 +90,18 @@ def ga(fun_cost, Ran, Box_num, Times, Pre=0.1, Cross=0.7, Mut_rat=0.05):
             gene += random.choice(['0', '1'])
         return gene
 
-    def ga_init():
-        """
-        GA池初始化
-        """
-
-        # 初始化个体
-        for i in range(Box_num):
-            GA_box.append(Biology(i, gene_init(), Mut_rat, 0))
-            GA_box[i].up_loss()
-        up_ans()
-
     def up_ans():
         """
         更新最佳值、最佳解
         """
         global ANS_Y, ANS_X
-        ans = list()
+        ansy = list()
         for i in GA_box:
-            ans.append(i.loss)
-        ANS_Y = min(ans)
-        ANS_X = GA_box[ans.index(ANS_Y)].ans
+            ansy.append(i.loss)
+        ANS_Y = min(ansy)
+        ANS_X = GA_box[ansy.index(ANS_Y)].ans
 
-    def cross_var(i):
+    def cross_var():
         """
         交叉变异
         :param i: 目前代数
@@ -126,43 +113,59 @@ def ga(fun_cost, Ran, Box_num, Times, Pre=0.1, Cross=0.7, Mut_rat=0.05):
         inter = one[k:]
         one[k:] = two[k:]
         two[k:] = inter
-        GA_box.append(Biology(Total, ''.join(one), Mut_rat, i))
-        GA_box.append(Biology(Total + 1, ''.join(two), Mut_rat, i))
+        GA_box.append(Biology(Total, ''.join(one), Mut_rat))
+        GA_box.append(Biology(Total + 1, ''.join(two), Mut_rat))
         Total = Total + 2
 
     def keil_some():
+        """
+        射杀低水平群体，维持种群数量
+        """
         loss_sum = 0
         for i in GA_box:
             loss_sum += i.loss
+        print(loss_sum / Total)
         for i in GA_box:
-            if i.loss > loss_sum / Total and Total < 5 * Box_num:
-                if random.random() < 0.5:
+            if Total < (3 * Box_num):  # 种群数目不太多时
+                if random.random() < 0.3:
                     i.delete()
+            elif abs(loss_sum / Total)>10:
+                    if i.loss > (loss_sum / Total):
+                        i.delete()
             else:
-                i.delete()
+                if random.random() < 0.6:
+                    i.delete()
+
+
+            '''if Total < (3 * Box_num):  # 种群数目不太多时
+                    if random.random() < 0.5:
+                        i.delete()
+                elif i.loss > (loss_sum / Total):
+                i.delete()'''
 
     ansy_list = list()
     ansx_list = list()
-    ga_init()
-    for i in range(1, Times + 1):  # 总迭代
-        # 随机两两匹配，准备交叉变异
-        for k in range(int(Total / 2 + 0.5)):
+    for i in range(Box_num):  # 初始化个体
+        GA_box.append(Biology(i, gene_init(), Mut_rat))
+        GA_box[i].up_loss()
+    up_ans()
+
+    for i in range(1, Times_num + 1):  # 总迭代
+        print(i, Total)
+        for k in range(int(Total / 2 + 0.5)):  # 随机两两匹配，准备交叉变异
             if random.random() < Cross:
-                cross_var(i)
-        # 计算损失
+                cross_var()
+
         for m in range(Total):
-            GA_box[m].up_loss()
+            GA_box[m].bio_mut()  # 基因突变
+            GA_box[m].up_loss()  # 计算损失
         up_ans()
 
-        # 基因突变
-        for m in range(Total):
-            GA_box[m].bio_mut()
-        up_ans()
-
-        # # 射杀低水平群体，维持种群数量
         keil_some()
 
         ansy_list.append(ANS_Y)
         ansx_list.append(ANS_X)
+        min_y = min(ansy_list)
+        min_x = ansx_list[ansy_list.index(min_y)]
 
-    return ansy_list, ansx_list
+    return ansy_list, ansx_list, min_y, min_x
