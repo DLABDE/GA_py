@@ -7,23 +7,27 @@ import math
 GA_box = list()  # 包含所有存活个体
 Total = None  # 暂存活数目
 ANS_Y = None  # 最佳值
-ANS_X = None  # 最佳解
+ANS_X = list()  # 最佳解
 
 
-def ga(fun_cost, Ran, Box_num, Times_num, Pre=0.1, Cross=0.7, Mut_rat=0.05):
+def ga(fun_cost, Ran, Box_num, Times_num, Pre=0.1, Cross=0.68, Mut_rat=0.05):
     """
     遗传算法
     :param fun_cost: 损失函数
-    :param Ran: 解算范围[L,H]
+    :param Ran: 各个参数的解算范围[[L1,H1],[L2,H2],,]
     :param Box_num: 初始个体数目
     :param Times_num: 迭代次数
     :param Pre: 解算精度
     :param Cross: 交叉变异概率
     :param Mut_rat: 基因突变概率
-    :return: [Y历史,X历史,最佳值,最佳解]
+    :return: [Y历史list,X历史list[list],最佳值,最佳解[list]]
     """
-    global Total
+    global Total, GA_box, ANS_X, ANS_Y
     Total = Box_num
+
+    GA_box = list()  # 包含所有存活个体
+    ANS_Y = None  # 最佳值
+    ANS_X = list()  # 最佳解
 
     class Biology(object):
         """
@@ -34,14 +38,14 @@ def ga(fun_cost, Ran, Box_num, Times_num, Pre=0.1, Cross=0.7, Mut_rat=0.05):
             """
             初始化个体信息
             :param name: 个体索引，在list中的位置
-            :param gene: 基因(b)
+            :param gene: 基因(二进制字符串)[是list,与参数对应]
             :param mut: 变异概率(0-1)
             """
             self.name = name
             self.gene = gene
             self.mut = mut
             self.loss = None  # 损失
-            self.ans = None  # 解算的x
+            self.ans = list()  # 解算的x
 
         def delete(self):
             """
@@ -57,35 +61,51 @@ def ga(fun_cost, Ran, Box_num, Times_num, Pre=0.1, Cross=0.7, Mut_rat=0.05):
             """
             更新损失
             """
-            x = int(self.gene, 2)
-            max = '1' * len(self.gene)
-            self.ans = x / int(max, 2) * abs(Ran[1] - Ran[0]) + min(Ran)  # 解算基因
+            self.ans = []
+            for i in range(len(self.gene)):  # 遍历染色体
+                x = int(self.gene[i], 2)
+                max = '1' * len(self.gene[i])
+                self.ans.append(x / int(max, 2) * abs(Ran[i][1] - Ran[i][0]) + min(Ran[i]))  # 解算基因
             self.loss = fun_cost(self.ans)
 
         def bio_mut(self):
             """
             基因突变
             """
-            lis = list(self.gene)
-            for i in range(len(lis)):
-                if random.random() < self.mut:
-                    lis[i] = '1' if lis[i] == '0' else '0' if lis[i] == '1' else '1'
-            self.gene = ''.join(lis)
+            after_lis = []
+            for i in self.gene:
+                lis = list(i)  # 取每一条染色体
+                for k in range(len(lis)):
+                    if random.random() < self.mut:
+                        lis[k] = '1' if lis[k] == '0' else '0' if lis[k] == '1' else '1'
+                after_lis.append(''.join(lis))
+            self.gene = after_lis
 
     def gene_hlong():
         """
-        计算基因长度(暂时只有单变量)
+        计算基因长度
+        :return: list()每个染色体对应一个长度
         """
-        diff = abs(Ran[1] - Ran[0])
-        return int(math.log(diff / Pre, 2) + 0.5)  # 向上取整
+        hlong = []
+
+        def get_long(diff):
+            return int(math.log(diff / Pre, 2) + 0.5)  # 向上取整
+
+        for i in range(len(Ran)):
+            hlong.append(get_long(abs(Ran[i][1] - Ran[i][0])))
+        return hlong
 
     def gene_init():
         """
         返回随机基因
+        :return: list()每个参数对应一个染色体
         """
-        gene = ''
-        for i in range(gene_hlong()):
-            gene += random.choice(['0', '1'])
+        gene = []
+        for i in gene_hlong():
+            ge = ''
+            for k in range(i):
+                ge += random.choice(['0', '1'])
+            gene.append(ge)
         return gene
 
     def up_ans():
@@ -102,17 +122,26 @@ def ga(fun_cost, Ran, Box_num, Times_num, Pre=0.1, Cross=0.7, Mut_rat=0.05):
     def cross_var():
         """
         交叉变异
-        :param i: 目前代数
         """
         global Total
-        one = list(random.choice(GA_box).gene)
-        two = list(random.choice(GA_box).gene)
-        k = random.randint(1, gene_hlong() - 1)  # 随机交叉节点
-        inter = one[k:]
-        one[k:] = two[k:]
-        two[k:] = inter
-        GA_box.append(Biology(Total, ''.join(one), Mut_rat))
-        GA_box.append(Biology(Total + 1, ''.join(two), Mut_rat))
+        after_ones = []
+        after_twos = []
+        ones = random.choice(GA_box).gene
+        twos = random.choice(GA_box).gene
+        for i in range(len(ones)):  # 遍历个体每一条染色体
+            one = list(ones[i])
+            two = list(twos[i])
+            k = random.randint(1, len(one) - 1)  # 随机交叉节点
+            inter = one[k:]
+            one[k:] = two[k:]
+            two[k:] = inter
+
+            one_str = ''.join(one)
+            two_str = ''.join(two)
+            after_ones.append(one_str)
+            after_twos.append(two_str)
+        GA_box.append(Biology(Total, after_ones, Mut_rat))
+        GA_box.append(Biology(Total + 1, after_twos, Mut_rat))
         Total = Total + 2
 
     def keil_some():
