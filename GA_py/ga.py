@@ -41,7 +41,7 @@ def ga(fun_cost, Ran, Box_num, Times_num, Pre=0.1, Cross=0.68, Mut_rat=0.05):
             self.gene = gene
             self.mut = mut
             self.loss = None  # 损失
-            self.ans = None  # 解算的x
+            self.ans = list()  # 解算的x
 
         def delete(self):
             """
@@ -78,8 +78,8 @@ def ga(fun_cost, Ran, Box_num, Times_num, Pre=0.1, Cross=0.68, Mut_rat=0.05):
         """
         long = 0
         for i in range(len(Ran)):
-            long += abs(Ran[i][1] - Ran[i][0]) / Pre
-        return int(math.log(long, 2) + 0.5)  # 向上取整
+            long += abs(Ran[i][1] - Ran[i][0])
+        return int(math.log(long / Pre, 2) + 0.5)  # 向上取整
 
     def gene_init():
         """
