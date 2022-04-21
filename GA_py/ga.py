@@ -15,7 +15,7 @@ def ga(fun_cost, Ran, Box_num, Times_num, Pre=0.1, Cross=0.7, Mut_rat=0.05):
     遗传算法
     :param fun_cost: 损失函数
     :param Ran: 解算范围[L,H]
-    :param Box_num: 初始化个体数目
+    :param Box_num: 初始个体数目
     :param Times_num: 迭代次数
     :param Pre: 解算精度
     :param Cross: 交叉变异概率
@@ -41,7 +41,7 @@ def ga(fun_cost, Ran, Box_num, Times_num, Pre=0.1, Cross=0.7, Mut_rat=0.05):
             self.gene = gene
             self.mut = mut
             self.loss = None  # 损失
-            self.ans = None  # 求解x
+            self.ans = None  # 解算的x
 
         def delete(self):
             """
@@ -50,18 +50,16 @@ def ga(fun_cost, Ran, Box_num, Times_num, Pre=0.1, Cross=0.7, Mut_rat=0.05):
             global Total
             for i in GA_box[self.name + 1:]:  # 遍历在本个体后的每一个个体
                 i.name = i.name - 1
-            GA_box.pop(self.name)
-            Total = Total - 1
+            GA_box.pop(self.name)  # 删除自己
+            Total = Total - 1  # 现存总数减一
 
         def up_loss(self):
             """
             更新损失
             """
             x = int(self.gene, 2)
-            max = ''
-            for i in range(gene_hlong()):
-                max += '1'
-            self.ans = x / int(max, 2) * abs(Ran[1] - Ran[0]) + min(Ran)
+            max = '1' * len(self.gene)
+            self.ans = x / int(max, 2) * abs(Ran[1] - Ran[0]) + min(Ran)  # 解算基因
             self.loss = fun_cost(self.ans)
 
         def bio_mut(self):
@@ -124,24 +122,12 @@ def ga(fun_cost, Ran, Box_num, Times_num, Pre=0.1, Cross=0.7, Mut_rat=0.05):
         loss_sum = 0
         for i in GA_box:
             loss_sum += i.loss
-        print(loss_sum / Total)
         for i in GA_box:
-            if Total < (3 * Box_num):  # 种群数目不太多时
-                if random.random() < 0.3:
+            if i.loss > (loss_sum / Total):
+                i.delete()
+            if Total > (5 * Box_num):  # 种群数量过多时，防止种群爆炸
+                if random.random() < 0.632:  # 1-1/e
                     i.delete()
-            elif abs(loss_sum / Total)>10:
-                    if i.loss > (loss_sum / Total):
-                        i.delete()
-            else:
-                if random.random() < 0.6:
-                    i.delete()
-
-
-            '''if Total < (3 * Box_num):  # 种群数目不太多时
-                    if random.random() < 0.5:
-                        i.delete()
-                elif i.loss > (loss_sum / Total):
-                i.delete()'''
 
     ansy_list = list()
     ansx_list = list()
@@ -149,20 +135,15 @@ def ga(fun_cost, Ran, Box_num, Times_num, Pre=0.1, Cross=0.7, Mut_rat=0.05):
         GA_box.append(Biology(i, gene_init(), Mut_rat))
         GA_box[i].up_loss()
     up_ans()
-
     for i in range(1, Times_num + 1):  # 总迭代
-        print(i, Total)
         for k in range(int(Total / 2 + 0.5)):  # 随机两两匹配，准备交叉变异
             if random.random() < Cross:
                 cross_var()
-
         for m in range(Total):
             GA_box[m].bio_mut()  # 基因突变
             GA_box[m].up_loss()  # 计算损失
         up_ans()
-
         keil_some()
-
         ansy_list.append(ANS_Y)
         ansx_list.append(ANS_X)
         min_y = min(ansy_list)
