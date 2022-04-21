@@ -22,8 +22,12 @@ def ga(fun_cost, Ran, Box_num, Times_num, Pre=0.1, Cross=0.68, Mut_rat=0.05):
     :param Mut_rat: 基因突变概率
     :return: [Y历史list,X历史list[list],最佳值,最佳解[list]]
     """
-    global Total
+    global Total, GA_box, ANS_X, ANS_Y
     Total = Box_num
+
+    GA_box = list()  # 包含所有存活个体
+    ANS_Y = None  # 最佳值
+    ANS_X = list()  # 最佳解
 
     class Biology(object):
         """
@@ -40,7 +44,7 @@ def ga(fun_cost, Ran, Box_num, Times_num, Pre=0.1, Cross=0.68, Mut_rat=0.05):
             self.name = name
             self.gene = gene
             self.mut = mut
-            self.loss = None  # 损失
+            self.loss = 10000  # 损失
             self.ans = list()  # 解算的x
 
         def delete(self):
@@ -83,6 +87,7 @@ def ga(fun_cost, Ran, Box_num, Times_num, Pre=0.1, Cross=0.68, Mut_rat=0.05):
         :return: list()每个染色体对应一个长度
         """
         hlong = []
+
         def get_long(diff):
             return int(math.log(diff / Pre, 2) + 0.5)  # 向上取整
 

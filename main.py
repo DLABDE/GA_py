@@ -19,23 +19,23 @@ def fun_2d(p):
 
 
 if __name__ == '__main__':
-    # 单参数示例
+    # 单参数示例###################################################################
     Ran = [[-90, 20]]  # 单参数，取值[-90,20]
     ansy_list, ansx_list, min_y, min_x = ga.ga(fun_1d, Ran, 15, 50)  # 初始群体15，迭代次数50
     # 绘制函数图像
-    t = np.arange(-90,20, 0.1)
-    y1 = fun_1d(t)
+    t = np.arange(-90, 20, 0.1)
+    y1 = fun_1d([t])
     plt.plot(t, y1)
     plt.plot(min_x[0], min_y, 'ro')  # 最优点
     plt.show()
     # 最佳解
-    print('Y', min_y)
-    print('X', min_x)
+    print('1dY', min_y)
+    print('1dX', min_x)
     # 运行过程
     plt.plot(ansy_list)
     plt.show()
 
-    # 双参数示例
+    # 双参数示例######################################################################
     Ran = [[-2, 2],  # 两个参数与取值范围
            [-2, 2]]
     ansy2_list, ansx2_list, min2_y, min2_x = ga.ga(fun_2d, Ran, 10, 50)  # 初始群体10，迭代次数50
@@ -55,5 +55,5 @@ if __name__ == '__main__':
     plt.plot(ansy2_list)
     plt.show()
     # 最佳解
-    print('Y', min2_y)
-    print('X', min2_x)
+    print('2dY', min2_y)
+    print('2dX', min2_x)
