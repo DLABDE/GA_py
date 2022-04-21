@@ -14,7 +14,7 @@ def ga(fun_cost, Ran, Box_num, Times_num, Pre=0.1, Cross=0.68, Mut_rat=0.05):
     """
     遗传算法
     :param fun_cost: 损失函数
-    :param Ran: 解算范围[L,H]
+    :param Ran: 各个参数的解算范围[[L1,H1],[L2,H2],,]
     :param Box_num: 初始个体数目
     :param Times_num: 迭代次数
     :param Pre: 解算精度
@@ -76,8 +76,10 @@ def ga(fun_cost, Ran, Box_num, Times_num, Pre=0.1, Cross=0.68, Mut_rat=0.05):
         """
         计算基因长度(暂时只有单变量)
         """
-        diff = abs(Ran[1] - Ran[0])
-        return int(math.log(diff / Pre, 2) + 0.5)  # 向上取整
+        long = 0
+        for i in range(len(Ran)):
+            long += abs(Ran[i][1] - Ran[i][0]) / Pre
+        return int(math.log(long, 2) + 0.5)  # 向上取整
 
     def gene_init():
         """
